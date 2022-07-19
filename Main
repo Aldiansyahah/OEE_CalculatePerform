@@ -1,0 +1,83 @@
+Function Solutions_OEE_Calculate()
+	Dim OperationTime, TotalTime, MaximumSpeed
+	Dim GoodParts, BreakDowns, LongStops, ShortStops,StartupRejects, ProductionRejects
+	Dim IdleTime, MissedSpeed, ActualSpeed, BadParts, TotalParts, AvailabilityLoss, ReducedSpeed, PerformanceLoss, QualityLoss, Availability, Performance, Quality, OEE, OEETarget
+	Dim UpTime, UpTimeFull, TimeLessAvailabilityLoss, TimeLessPerformanceLoss
+	
+	'Tags to Variables
+	OperationTime = $Solutions_OEE.OperationTime
+	TotalTime = $Solutions_OEE.TotalTime
+	MaximumSpeed = $Solutions_OEE.MaximumSpeed
+	GoodParts = $Solutions_OEE.GoodParts
+	LongStops = $Solutions_OEE.LongStops
+	BreakDowns = $Solutions_OEE.Breakdowns
+	ShortStops = $Solutions_OEE.ShortStops
+	StartupRejects = $Solutions_OEE.StartupRejects
+	ProductionRejects = $Solutions_OEE.ProductionRejects
+
+	'Calculated
+	IdleTime = TotalTime - OperationTime
+	
+	UpTime = OperationTime - BreakDowns - LongStops
+	UpTimeFull = UpTime - ShortStops
+	If $Num(UpTimeFull)<>0 Then
+		ActualSpeed = (GoodParts + StartupRejects + ProductionRejects) / UpTimeFull
+	Else
+		ActualSpeed = 0
+	End If
+	MissedSpeed = MaximumSpeed - ActualSpeed
+
+	BadParts = StartupRejects + ProductionRejects 
+	TotalParts = BadParts + GoodParts
+	
+	AvailabilityLoss = LongStops + BreakDowns
+	
+	If $Num(ActualSpeed)=0 Or $Num(MaximumSpeed)=0 Then
+		ReducedSpeed = 0
+	Else
+		ReducedSpeed = (GoodParts / ActualSpeed) - (GoodParts / MaximumSpeed)
+	End If
+	PerformanceLoss = 	ReducedSpeed + ShortStops
+
+	If $Num(ActualSpeed)<>0 Then
+		QualityLoss = (StartupRejects + ProductionRejects) / ActualSpeed
+	Else
+		QualityLoss = 0
+	End If	
+	
+	TimeLessAvailabilityLoss = OperationTime - AvailabilityLoss
+	TimeLessPerformanceLoss = TimeLessAvailabilityLoss - PerformanceLoss
+	
+	If $Num(OperationTime)<>0 Then
+		Availability = 1 - (AvailabilityLoss / OperationTime)
+	Else
+		Availability = 0
+	End If	
+	If $Num(TimeLessAvailabilityLoss)<>0 Then
+		Performance = 1 - (PerformanceLoss / TimeLessAvailabilityLoss)
+	Else
+		Performance = 0
+	End If
+	If $Num(TimeLessPerformanceLoss)<>0 Then
+		Quality = 1 - (QualityLoss / TimeLessPerformanceLoss)
+	Else
+		Quality = 0
+	End If
+	OEE = Availability * Performance * Quality
+			
+	'Variables to Tags
+	$Solutions_OEE.IdleTime = IdleTime
+	$Solutions_OEE.MissedSpeed = MissedSpeed
+	$Solutions_OEE.ActualSpeed = ActualSpeed
+	$Solutions_OEE.BadParts = BadParts
+	$Solutions_OEE.TotalParts = TotalParts
+	$Solutions_OEE.AvailabilityLoss = AvailabilityLoss
+	$Solutions_OEE.ReducedSpeed = ReducedSpeed
+	$Solutions_OEE.PerformanceLoss = PerformanceLoss
+	$Solutions_OEE.QualityLoss = QualityLoss
+	$Solutions_OEE.Availability = Availability
+	$Solutions_OEE.Performance = Performance
+	$Solutions_OEE.Quality = Quality
+	$Solutions_OEE.OEE = OEE
+	
+End Function
